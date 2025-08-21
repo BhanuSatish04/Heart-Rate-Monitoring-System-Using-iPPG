@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPPG Heart Rate Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>iPPG Heart Rate Monitoring System</h1>
+            <p class="subtitle">Real-time photoplethysmography using imaging technology</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Video and Controls Section -->
+            <div class="video-section card">
+                <div class="card__header">
+                    <h2>Live Camera Feed</h2>
+                    <div class="status-indicators">
+                        <span id="cameraStatus" class="status status--info">Camera: Disconnected</span>
+                        <span id="faceStatus" class="status status--info">Face: Not Detected</span>
+                    </div>
+                </div>
+                <div class="card__body">
+                    <div class="video-container">
+                        <video id="videoElement" autoplay muted playsinline></video>
+                        <canvas id="overlayCanvas"></canvas>
+                        <canvas id="processingCanvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="video-controls">
+                        <button id="startBtn" class="btn btn--primary">Start Monitoring</button>
+                        <button id="stopBtn" class="btn btn--secondary" disabled>Stop Monitoring</button>
+                        <button id="calibrateBtn" class="btn btn--outline">Calibrate</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heart Rate Display -->
+            <div class="hr-display-section">
+                <div class="card hr-main-display">
+                    <div class="card__body">
+                        <div class="hr-value-container">
+                            <div class="hr-value" id="heartRateValue">--</div>
+                            <div class="hr-unit">BPM</div>
+                        </div>
+                        <div class="hr-status">
+                            <span id="hrStatus" class="status status--info">Ready to Start</span>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidenceFill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card signal-quality">
+                    <div class="card__header">
+                        <h3>Signal Quality</h3>
+                    </div>
+                    <div class="card__body">
+                        <div class="quality-metrics">
+                            <div class="metric">
+                                <label>SNR:</label>
+                                <span id="snrValue">-- dB</span>
+                            </div>
+                            <div class="metric">
+                                <label>Motion:</label>
+                                <span id="motionValue">Low</span>
+                            </div>
+                            <div class="metric">
+                                <label>Lighting:</label>
+                                <span id="lightingValue">Good</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Waveform -->
+            <div class="waveform-section card">
+                <div class="card__header">
+                    <h3>Live PPG Waveform</h3>
+                    <div class="waveform-controls">
+                        <label class="form-label">
+                            Scale:
+                            <select id="waveformScale" class="form-control">
+                                <option value="1">1x</option>
+                                <option value="2" selected>2x</option>
+                                <option value="5">5x</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="card__body">
+                    <div class="chart-container" style="position: relative; height: 200px;">
+                        <canvas id="waveformChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heart Rate History -->
+            <div class="history-section card">
+                <div class="card__header">
+                    <h3>Heart Rate History</h3>
+                    <button id="exportBtn" class="btn btn--outline btn--sm">Export Data</button>
+                </div>
+                <div class="card__body">
+                    <div class="chart-container" style="position: relative; height: 200px;">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div class="settings-section card">
+                <div class="card__header">
+                    <h3>Settings & Configuration</h3>
+                </div>
+                <div class="card__body">
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label class="form-label">Algorithm:</label>
+                            <select id="algorithmSelect" class="form-control">
+                                <option value="green_channel" selected>Green Channel</option>
+                                <option value="chrom">Chrominance (CHROM)</option>
+                                <option value="pos">Plane-Orthogonal-to-Skin (POS)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Window Size (seconds):</label>
+                            <select id="windowSize" class="form-control">
+                                <option value="10" selected>10</option>
+                                <option value="15">15</option>
+                                <option value="30">30</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sensitivity:</label>
+                            <input type="range" id="sensitivity" class="form-control" min="0.5" max="2" step="0.1" value="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Information Panel -->
+            <div class="info-section card">
+                <div class="card__header">
+                    <h3>Instructions & Information</h3>
+                </div>
+                <div class="card__body">
+                    <div class="instructions">
+                        <h4>For Best Results:</h4>
+                        <ul>
+                            <li>Sit still and face the camera directly</li>
+                            <li>Ensure good, even lighting on your face</li>
+                            <li>Remove glasses if possible</li>
+                            <li>Stay within 2-3 feet of the camera</li>
+                            <li>Minimize movement during measurement</li>
+                        </ul>
+                        
+                        <h4>How iPPG Works:</h4>
+                        <p>Imaging photoplethysmography detects subtle color changes in your skin caused by blood flow. The camera captures these minute variations, which are then processed to extract your heart rate.</p>
+                        
+                        <div class="technical-info">
+                            <h4>Technical Details:</h4>
+                            <div class="tech-metrics">
+                                <div class="metric">
+                                    <label>Sampling Rate:</label>
+                                    <span id="samplingRate">30 FPS</span>
+                                </div>
+                                <div class="metric">
+                                    <label>Filter Range:</label>
+                                    <span>0.4 - 3.5 Hz</span>
+                                </div>
+                                <div class="metric">
+                                    <label>Processing:</label>
+                                    <span id="processingLoad">Ready</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Browser Compatibility Notice -->
+        <div id="compatibilityNotice" class="compatibility-notice card hidden">
+            <div class="card__body">
+                <h3>Browser Compatibility</h3>
+                <p>This application works best with modern browsers that support WebRTC and Canvas APIs.</p>
+                <div class="browser-support">
+                    <span class="status status--success">Chrome: Full Support</span>
+                    <span class="status status--success">Firefox: Full Support</span>
+                    <span class="status status--success">Safari: Full Support</span>
+                    <span class="status status--success">Edge: Full Support</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
